@@ -6,6 +6,9 @@ import { AppService } from './app.service';
 import { envValidationSchema } from './config/env.validation';
 import databaseConfig from './config/database.config';
 import { HealthModule } from './modules/health/health.module';
+import { RestaurantModule } from './modules/restaurant/restaurant.module';
+import { UserModule } from './modules/user/user.module';
+import { DriverModule } from './modules/driver/driver.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { HealthModule } from './modules/health/health.module';
       inject: [ConfigService],
     }),
     HealthModule,
+    RestaurantModule,
+    UserModule,
+    DriverModule,
   ],
   controllers: [AppController],
   providers: [AppService],
