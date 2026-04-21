@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module';
 import { RestaurantModule } from './modules/restaurant/restaurant.module';
 import { UserModule } from './modules/user/user.module';
 import { DriverModule } from './modules/driver/driver.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DriverModule } from './modules/driver/driver.module';
     RestaurantModule,
     UserModule,
     DriverModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
