@@ -12,6 +12,7 @@ import { DriverModule } from './modules/driver/driver.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrderModule } from './modules/order/order.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PaymentModule } from './modules/payment/payment.module';
     AuthModule,
     OrderModule,
     PaymentModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
