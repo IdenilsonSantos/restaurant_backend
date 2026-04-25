@@ -13,6 +13,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrderModule } from './modules/order/order.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RedisModule } from './modules/redis/redis.module';
     OrderModule,
     PaymentModule,
     RedisModule,
+    DeliveryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
