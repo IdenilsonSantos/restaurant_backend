@@ -33,7 +33,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "PK_users_id"   PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_users_email" ON "users" ("email")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_users_email" ON "users" ("email")`,
+    );
 
     // Table: restaurants
     await queryRunner.query(`
@@ -52,7 +54,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_restaurants_owner" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_restaurants_name" ON "restaurants" ("name")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_restaurants_name" ON "restaurants" ("name")`,
+    );
 
     // Table: products
     await queryRunner.query(`
@@ -70,7 +74,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_products_restaurant" FOREIGN KEY ("restaurantId") REFERENCES "restaurants"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_products_restaurantId" ON "products" ("restaurantId")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_restaurantId" ON "products" ("restaurantId")`,
+    );
 
     // Table: drivers
     await queryRunner.query(`
@@ -90,7 +96,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_drivers_user"   FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_drivers_isAvailable" ON "drivers" ("isAvailable")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_drivers_isAvailable" ON "drivers" ("isAvailable")`,
+    );
 
     // Table: orders
     await queryRunner.query(`
@@ -111,9 +119,15 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_orders_restaurant" FOREIGN KEY ("restaurantId") REFERENCES "restaurants"("id")  ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_customerId"   ON "orders" ("customerId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_restaurantId" ON "orders" ("restaurantId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_status"       ON "orders" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_customerId"   ON "orders" ("customerId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_restaurantId" ON "orders" ("restaurantId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_status"       ON "orders" ("status")`,
+    );
 
     // Table: order_items
     await queryRunner.query(`
@@ -130,7 +144,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_order_items_product" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_order_items_orderId" ON "order_items" ("orderId")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_order_items_orderId" ON "order_items" ("orderId")`,
+    );
 
     // Table: deliveries
     await queryRunner.query(`
@@ -149,8 +165,12 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_deliveries_driver"   FOREIGN KEY ("driverId") REFERENCES "drivers"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_deliveries_driverId" ON "deliveries" ("driverId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_deliveries_status"   ON "deliveries" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_deliveries_driverId" ON "deliveries" ("driverId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_deliveries_status"   ON "deliveries" ("status")`,
+    );
 
     // Table: payments
     await queryRunner.query(`
@@ -169,7 +189,9 @@ export class InitialSchema1745272800000 implements MigrationInterface {
         CONSTRAINT "FK_payments_order"    FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_payments_status" ON "payments" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_payments_status" ON "payments" ("status")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

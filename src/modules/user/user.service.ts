@@ -69,9 +69,35 @@ export class UserService {
     await this.userRepository.remove(user);
   }
 
+  async setResetPasswordToken(
+    userId: string,
+    token: string,
+    expires: Date,
+  ): Promise<void> {
+    await this.userRepository.update(userId, {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    });
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
+  }
+
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await this.userRepository.update(userId, {
+      passwordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
+  }
+
   private sanitize(user: User): Omit<User, 'passwordHash'> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...rest } = user;
-    return rest as Omit<User, 'passwordHash'>;
+    return rest;
   }
 }
