@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Restaurant } from './entities/restaurant.entity';
 import { Product } from './entities/product.entity';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
@@ -75,6 +75,15 @@ export class RestaurantService {
     return this.productRepository.find({
       where: { restaurantId, isAvailable: true },
       order: { name: 'ASC' },
+    });
+  }
+
+  async findProductsByIds(
+    restaurantId: string,
+    productIds: string[],
+  ): Promise<Product[]> {
+    return this.productRepository.find({
+      where: { id: In(productIds), restaurantId, isAvailable: true },
     });
   }
 }
