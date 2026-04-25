@@ -11,6 +11,7 @@ import { UserModule } from './modules/user/user.module';
 import { DriverModule } from './modules/driver/driver.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrderModule } from './modules/order/order.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { OrderModule } from './modules/order/order.module';
     DriverModule,
     AuthModule,
     OrderModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

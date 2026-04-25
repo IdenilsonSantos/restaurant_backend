@@ -8,6 +8,7 @@ import { Order } from '../../modules/order/entities/order.entity';
 import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { Delivery } from '../../modules/delivery/entities/delivery.entity';
 import { Payment } from '../../modules/payment/entities/payment.entity';
+import { PaymentMethod, PaymentMethodCode } from '../../modules/payment/entities/payment-method.entity';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { DeliveryStatus } from '../../common/enums/delivery-status.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
@@ -32,14 +33,20 @@ async function seed() {
   );
   console.log('Tables truncated');
 
-  const userRepo       = AppDataSource.getRepository(User);
-  const restaurantRepo = AppDataSource.getRepository(Restaurant);
-  const productRepo    = AppDataSource.getRepository(Product);
-  const driverRepo     = AppDataSource.getRepository(Driver);
-  const orderRepo      = AppDataSource.getRepository(Order);
-  const itemRepo       = AppDataSource.getRepository(OrderItem);
-  const deliveryRepo   = AppDataSource.getRepository(Delivery);
-  const paymentRepo    = AppDataSource.getRepository(Payment);
+  const userRepo          = AppDataSource.getRepository(User);
+  const restaurantRepo    = AppDataSource.getRepository(Restaurant);
+  const productRepo       = AppDataSource.getRepository(Product);
+  const driverRepo        = AppDataSource.getRepository(Driver);
+  const orderRepo         = AppDataSource.getRepository(Order);
+  const itemRepo          = AppDataSource.getRepository(OrderItem);
+  const deliveryRepo      = AppDataSource.getRepository(Delivery);
+  const paymentRepo       = AppDataSource.getRepository(Payment);
+  const paymentMethodRepo = AppDataSource.getRepository(PaymentMethod);
+
+  const [pixMethod, creditCardMethod] = await Promise.all([
+    paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.PIX }),
+    paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.CREDIT_CARD }),
+  ]);
 
   // ── Users ──────────────────────────────────────────────────────────────────
 
@@ -148,9 +155,9 @@ async function seed() {
   const now = new Date();
 
   await paymentRepo.save([
-    paymentRepo.create({ orderId: order1.id, amount: order1Total, status: PaymentStatus.CONFIRMED, method: 'credit_card', externalId: 'ext_001', confirmedAt: now }),
-    paymentRepo.create({ orderId: order2.id, amount: order2Total, status: PaymentStatus.CONFIRMED, method: 'pix', externalId: 'ext_002', confirmedAt: now }),
-    paymentRepo.create({ orderId: order3.id, amount: order3Total, status: PaymentStatus.PENDING, method: 'credit_card', externalId: null, confirmedAt: null }),
+    paymentRepo.create({ orderId: order1.id, amount: order1Total, status: PaymentStatus.CONFIRMED, paymentMethodId: creditCardMethod.id, externalId: 'ext_001', confirmedAt: now }),
+    paymentRepo.create({ orderId: order2.id, amount: order2Total, status: PaymentStatus.CONFIRMED, paymentMethodId: pixMethod.id, externalId: 'ext_002', confirmedAt: now }),
+    paymentRepo.create({ orderId: order3.id, amount: order3Total, status: PaymentStatus.PENDING, paymentMethodId: creditCardMethod.id, externalId: null, confirmedAt: null }),
   ]);
   console.log('Payments seeded');
 
@@ -170,13 +177,14 @@ async function seed() {
   await AppDataSource.destroy();
 
   console.log('\nSeed completo! Resumo:');
-  console.log('  Usuários  : 6 (admin, owner, 2 customers, 2 drivers)');
-  console.log('  Restaurantes: 2 (Burger House, Pizza Express)');
-  console.log('  Produtos  : 10');
-  console.log('  Pedidos   : 3 (delivered / preparing / pending)');
-  console.log('  Itens     : 6');
-  console.log('  Pagamentos: 3 (confirmed / confirmed / pending)');
-  console.log('  Entregas  : 2 (delivered / waiting)');
+  console.log('  Usuários        : 6 (admin, owner, 2 customers, 2 drivers)');
+  console.log('  Restaurantes    : 2 (Burger House, Pizza Express)');
+  console.log('  Produtos        : 10');
+  console.log('  Pedidos         : 3 (delivered / preparing / pending)');
+  console.log('  Itens           : 6');
+  console.log('  Métodos pag.    : 8 (seeded via migration)');
+  console.log('  Pagamentos      : 3 (confirmed / confirmed / pending)');
+  console.log('  Entregas        : 2 (delivered / waiting)');
 }
 
 seed().catch((err) => {
