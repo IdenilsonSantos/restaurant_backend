@@ -4,11 +4,13 @@ import {
   Entity,
   Index,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { PaymentStatus } from '../../../common/enums/payment-status.enum';
+import { PaymentMethod } from './payment-method.entity';
 
 @Entity('payments')
 export class Payment {
@@ -17,6 +19,9 @@ export class Payment {
 
   @Column({ type: 'uuid', unique: true })
   orderId!: string;
+
+  @Column({ type: 'uuid' })
+  paymentMethodId!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount!: number;
@@ -28,9 +33,6 @@ export class Payment {
     default: PaymentStatus.PENDING,
   })
   status!: PaymentStatus;
-
-  @Column({ type: 'varchar' })
-  method!: string;
 
   @Column({ type: 'varchar', nullable: true })
   externalId!: string | null;
@@ -47,4 +49,8 @@ export class Payment {
   @OneToOne('Order', 'payment')
   @JoinColumn({ name: 'orderId' })
   order!: any;
+
+  @ManyToOne(() => PaymentMethod)
+  @JoinColumn({ name: 'paymentMethodId' })
+  paymentMethod!: PaymentMethod;
 }
