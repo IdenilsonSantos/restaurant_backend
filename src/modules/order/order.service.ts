@@ -14,6 +14,7 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ORDER_TRANSITIONS } from './constants/order-transitions.constant';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { PaginatedResult } from '../../common/interfaces/paginated-result.interface';
+import { NotificationsProducer } from '../queue/producers/notifications.producer';
 
 @Injectable()
 export class OrderService {
@@ -23,6 +24,7 @@ export class OrderService {
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
     private readonly restaurantService: RestaurantService,
+    private readonly notificationsProducer: NotificationsProducer,
   ) {}
 
   async create(customerId: string, dto: CreateOrderDto): Promise<Order> {
@@ -177,6 +179,13 @@ export class OrderService {
     order.status = dto.status;
     await this.orderRepository.save(order);
 
+    // Enqueue async notification for the customer about the status change
+    await this.notificationsProducer.enqueueOrderStatusChange(
+      order.id,
+      order.customerId,
+      dto.status,
+    );
+
     return this.findOne(id);
   }
 
@@ -195,6 +204,13 @@ export class OrderService {
 
     order.status = OrderStatus.CANCELLED;
     await this.orderRepository.save(order);
+
+    // Notify the customer about the cancellation
+    await this.notificationsProducer.enqueueOrderStatusChange(
+      order.id,
+      order.customerId,
+      OrderStatus.CANCELLED,
+    );
 
     return this.findOne(id);
   }

@@ -11,13 +11,18 @@ export class PaymentMethodService {
   ) {}
 
   findAll(): Promise<PaymentMethod[]> {
-    return this.repo.find({ where: { isActive: true }, order: { name: 'ASC' } });
+    return this.repo.find({
+      where: { isActive: true },
+      order: { name: 'ASC' },
+    });
   }
 
   async findOne(id: string): Promise<PaymentMethod> {
     const method = await this.repo.findOne({ where: { id, isActive: true } });
     if (!method) {
-      throw new NotFoundException(`Payment method "${id}" not found or inactive`);
+      throw new NotFoundException(
+        `Payment method "${id}" not found or inactive`,
+      );
     }
     return method;
   }

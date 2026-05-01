@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Driver } from '../driver/entities/driver.entity';
@@ -101,8 +97,7 @@ export class MatchingService {
     // Protect against zero distance by flooring at 0.01 km
     const scored = availableDrivers.map((driver) => {
       const dist = Math.max(distMap.get(driver.id) ?? 1, 0.01);
-      const score =
-        (1 / dist) * 0.6 + (Number(driver.rating) / 5) * 0.4;
+      const score = (1 / dist) * 0.6 + (Number(driver.rating) / 5) * 0.4;
       return { driver, score };
     });
 
@@ -157,9 +152,7 @@ export class MatchingService {
       // 3. Update driver state in Redis
       await this.redisService.setDriverState(driverId, 'busy');
 
-      this.logger.log(
-        `Driver ${driverId} assigned to delivery ${deliveryId}`,
-      );
+      this.logger.log(`Driver ${driverId} assigned to delivery ${deliveryId}`);
     } finally {
       await this.redisService.releaseLock(lockKey);
     }
@@ -170,10 +163,7 @@ export class MatchingService {
    * or fails. Updates DB and Redis.
    */
   async releaseDriver(driverId: string): Promise<void> {
-    await this.driverRepository.update(
-      { id: driverId },
-      { isAvailable: true },
-    );
+    await this.driverRepository.update({ id: driverId }, { isAvailable: true });
     await this.redisService.setDriverState(driverId, 'available');
     this.logger.log(`Driver ${driverId} released back to available pool`);
   }
