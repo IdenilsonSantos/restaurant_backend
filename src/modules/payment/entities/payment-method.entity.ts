@@ -16,14 +16,30 @@ export const DEFAULT_PAYMENT_METHODS: Array<{
   name: string;
   isActive: boolean;
 }> = [
-  { code: PaymentMethodCode.PIX,          name: 'PIX',                  isActive: true  },
-  { code: PaymentMethodCode.CREDIT_CARD,  name: 'Cartão de Crédito',    isActive: true  },
-  { code: PaymentMethodCode.DEBIT_CARD,   name: 'Cartão de Débito',     isActive: true  },
-  { code: PaymentMethodCode.CASH,         name: 'Dinheiro na Entrega',  isActive: true  },
-  { code: PaymentMethodCode.FOOD_VOUCHER, name: 'Vale-Refeição',        isActive: true  },
-  { code: PaymentMethodCode.MEAL_VOUCHER, name: 'Vale-Alimentação',     isActive: true  },
-  { code: PaymentMethodCode.BOLETO,       name: 'Boleto Bancário',      isActive: true  },
-  { code: PaymentMethodCode.CRYPTO,       name: 'Criptomoeda',          isActive: false },
+  { code: PaymentMethodCode.PIX, name: 'PIX', isActive: true },
+  {
+    code: PaymentMethodCode.CREDIT_CARD,
+    name: 'Cartão de Crédito',
+    isActive: true,
+  },
+  {
+    code: PaymentMethodCode.DEBIT_CARD,
+    name: 'Cartão de Débito',
+    isActive: true,
+  },
+  { code: PaymentMethodCode.CASH, name: 'Dinheiro na Entrega', isActive: true },
+  {
+    code: PaymentMethodCode.FOOD_VOUCHER,
+    name: 'Vale-Refeição',
+    isActive: true,
+  },
+  {
+    code: PaymentMethodCode.MEAL_VOUCHER,
+    name: 'Vale-Alimentação',
+    isActive: true,
+  },
+  { code: PaymentMethodCode.BOLETO, name: 'Boleto Bancário', isActive: true },
+  { code: PaymentMethodCode.CRYPTO, name: 'Criptomoeda', isActive: false },
 ];
 
 @Entity('payment_methods')

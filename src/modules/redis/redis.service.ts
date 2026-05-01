@@ -201,13 +201,7 @@ export class RedisService {
 
   async acquireLock(key: string, ttlMs: number): Promise<boolean> {
     // SET lock:{key} 1 PX ttlMs NX — only sets if not already present
-    const result = await this.redis.set(
-      `lock:${key}`,
-      '1',
-      'PX',
-      ttlMs,
-      'NX',
-    );
+    const result = await this.redis.set(`lock:${key}`, '1', 'PX', ttlMs, 'NX');
     return result === 'OK';
   }
 

@@ -8,4 +8,4 @@ export interface RateLimitOptions {
 }
 
 export const RateLimit = (limit: number, windowSeconds: number) =>
-  SetMetadata(RATE_LIMIT_KEY, { limit, windowSeconds } as RateLimitOptions);
+  SetMetadata(RATE_LIMIT_KEY, { limit, windowSeconds });

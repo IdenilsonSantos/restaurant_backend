@@ -15,9 +15,13 @@ import { UpdateDeliveryStatusDto } from './dto/update-delivery-status.dto';
 import { DeliveryStatus } from '../../common/enums/delivery-status.enum';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { PaginatedResult } from '../../common/interfaces/paginated-result.interface';
+import { DeliveryMatchingProducer } from '../queue/producers/delivery-matching.producer';
 
 /** Valid status transitions a driver may request for their own delivery */
-const ALLOWED_DRIVER_TRANSITIONS: Record<DeliveryStatus, DeliveryStatus | null> = {
+const ALLOWED_DRIVER_TRANSITIONS: Record<
+  DeliveryStatus,
+  DeliveryStatus | null
+> = {
   [DeliveryStatus.WAITING]: null,
   [DeliveryStatus.ASSIGNED]: DeliveryStatus.PICKED_UP,
   [DeliveryStatus.PICKED_UP]: DeliveryStatus.DELIVERED,
@@ -34,6 +38,7 @@ export class DeliveryService {
     private readonly deliveryRepository: Repository<Delivery>,
     private readonly matchingService: MatchingService,
     private readonly orderService: OrderService,
+    private readonly deliveryMatchingProducer: DeliveryMatchingProducer,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -73,26 +78,18 @@ export class DeliveryService {
     });
     const saved = await this.deliveryRepository.save(delivery);
 
-    // Attempt to match a driver immediately
-    // The restaurant lat/lng is not stored on Order, so we use the delivery
-    // destination as the reference point (closest available driver wins).
-    // If the restaurant entity carries coordinates in the future this can be
-    // refined without changing the public API.
-    const driverId = await this.matchingService.findBestDriver(
+    // Enqueue async driver matching via BullMQ.
+    // The processor will attempt to find and assign a driver, retrying up to
+    // 5 times with growing delays if no driver is available.
+    await this.deliveryMatchingProducer.enqueueMatching(
+      saved.id,
       Number(order.deliveryLatitude),
       Number(order.deliveryLongitude),
     );
 
-    if (driverId) {
-      await this.matchingService.assignDriver(saved.id, driverId);
-      this.logger.log(
-        `Delivery ${saved.id}: driver ${driverId} assigned immediately`,
-      );
-    } else {
-      this.logger.warn(
-        `Delivery ${saved.id}: no driver available, remains in waiting`,
-      );
-    }
+    this.logger.log(
+      `Delivery ${saved.id}: matching job enqueued for order ${dto.orderId}`,
+    );
 
     return this.findOne(saved.id);
   }
@@ -210,9 +207,7 @@ export class DeliveryService {
     });
 
     if (!delivery) {
-      throw new NotFoundException(
-        `Delivery for order "${orderId}" not found`,
-      );
+      throw new NotFoundException(`Delivery for order "${orderId}" not found`);
     }
 
     return delivery;

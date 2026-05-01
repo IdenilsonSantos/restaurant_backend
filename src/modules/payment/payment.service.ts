@@ -107,9 +107,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new NotFoundException(
-        `Payment for order "${orderId}" not found`,
-      );
+      throw new NotFoundException(`Payment for order "${orderId}" not found`);
     }
 
     return payment;
