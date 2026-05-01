@@ -1,8 +1,9 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { QUEUES, JOBS } from '../constants/queue.constants';
 import { OrderStatus } from '../../../common/enums/order-status.enum';
+import { EventsService } from '../../events/events.service';
 
 interface NotifyOrderStatusJobData {
   orderId: string;
@@ -15,9 +16,14 @@ interface NotifyDeliveryRequestJobData {
   driverId: string;
 }
 
+@Injectable()
 @Processor(QUEUES.NOTIFICATIONS)
 export class NotificationsProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationsProcessor.name);
+
+  constructor(private readonly eventsService: EventsService) {
+    super();
+  }
 
   process(
     job: Job<NotifyOrderStatusJobData | NotifyDeliveryRequestJobData>,
@@ -35,6 +41,11 @@ export class NotificationsProcessor extends WorkerHost {
         this.logger.log(
           `Notifying driver ${data.driverId}: delivery ${data.deliveryId}`,
         );
+        // Real-time: push the delivery request directly to the driver's room
+        this.eventsService.emitDeliveryRequest(data.driverId, {
+          deliveryId: data.deliveryId,
+          driverId: data.driverId,
+        });
         break;
       }
       default:

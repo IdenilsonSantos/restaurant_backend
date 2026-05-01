@@ -15,6 +15,7 @@ import { ORDER_TRANSITIONS } from './constants/order-transitions.constant';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { PaginatedResult } from '../../common/interfaces/paginated-result.interface';
 import { NotificationsProducer } from '../queue/producers/notifications.producer';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class OrderService {
@@ -25,6 +26,7 @@ export class OrderService {
     private readonly orderItemRepository: Repository<OrderItem>,
     private readonly restaurantService: RestaurantService,
     private readonly notificationsProducer: NotificationsProducer,
+    private readonly eventsService: EventsService,
   ) {}
 
   async create(customerId: string, dto: CreateOrderDto): Promise<Order> {
@@ -86,7 +88,17 @@ export class OrderService {
 
     await this.orderItemRepository.save(orderItems);
 
-    return this.findOne(savedOrder.id);
+    const createdOrder = await this.findOne(savedOrder.id);
+
+    // Real-time: notify the restaurant about the new order
+    this.eventsService.emitNewOrder(createdOrder.restaurantId, {
+      orderId: createdOrder.id,
+      status: createdOrder.status,
+      totalAmount: createdOrder.totalAmount,
+      customerId: createdOrder.customerId,
+    });
+
+    return createdOrder;
   }
 
   async findOne(id: string): Promise<Order> {
@@ -186,7 +198,21 @@ export class OrderService {
       dto.status,
     );
 
-    return this.findOne(id);
+    const updatedOrder = await this.findOne(id);
+
+    // Real-time: notify all parties about the status change
+    this.eventsService.emitOrderUpdate(
+      updatedOrder.customerId,
+      updatedOrder.restaurantId,
+      updatedOrder.id,
+      {
+        orderId: updatedOrder.id,
+        status: updatedOrder.status,
+        updatedAt: updatedOrder.updatedAt,
+      },
+    );
+
+    return updatedOrder;
   }
 
   async cancel(id: string, customerId: string): Promise<Order> {
@@ -212,6 +238,20 @@ export class OrderService {
       OrderStatus.CANCELLED,
     );
 
-    return this.findOne(id);
+    const cancelledOrder = await this.findOne(id);
+
+    // Real-time: notify all parties about the cancellation
+    this.eventsService.emitOrderUpdate(
+      cancelledOrder.customerId,
+      cancelledOrder.restaurantId,
+      cancelledOrder.id,
+      {
+        orderId: cancelledOrder.id,
+        status: cancelledOrder.status,
+        updatedAt: cancelledOrder.updatedAt,
+      },
+    );
+
+    return cancelledOrder;
   }
 }
