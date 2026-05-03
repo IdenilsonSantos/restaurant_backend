@@ -16,6 +16,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { EventsModule } from './modules/events/events.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { EventsModule } from './modules/events/events.module';
     DeliveryModule,
     QueueModule,
     EventsModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

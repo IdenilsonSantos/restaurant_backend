@@ -40,4 +40,10 @@ export class CreateRestaurantDto {
   @IsOptional()
   @IsBoolean()
   isOpen?: boolean = false;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  deliveryFee?: number = 0;
 }

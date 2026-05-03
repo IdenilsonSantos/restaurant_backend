@@ -12,6 +12,8 @@ import {
   PaymentMethod,
   PaymentMethodCode,
 } from '../../modules/payment/entities/payment-method.entity';
+import { RestaurantReview } from '../../modules/restaurant/entities/restaurant-review.entity';
+import { UserFavoriteRestaurant } from '../../modules/restaurant/entities/user-favorite-restaurant.entity';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { DeliveryStatus } from '../../common/enums/delivery-status.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
@@ -32,7 +34,7 @@ async function seed() {
   console.log('Connected to database');
 
   await AppDataSource.query(
-    'TRUNCATE TABLE deliveries, payments, order_items, orders, drivers, products, restaurants, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE user_favorite_restaurants, restaurant_reviews, restaurant_payment_methods, deliveries, payments, order_items, orders, drivers, products, restaurants, users RESTART IDENTITY CASCADE',
   );
   console.log('Tables truncated');
 
@@ -45,11 +47,17 @@ async function seed() {
   const deliveryRepo = AppDataSource.getRepository(Delivery);
   const paymentRepo = AppDataSource.getRepository(Payment);
   const paymentMethodRepo = AppDataSource.getRepository(PaymentMethod);
+  const reviewRepo = AppDataSource.getRepository(RestaurantReview);
+  const favoriteRepo = AppDataSource.getRepository(UserFavoriteRestaurant);
 
-  const [pixMethod, creditCardMethod] = await Promise.all([
-    paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.PIX }),
-    paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.CREDIT_CARD }),
-  ]);
+  const [pixMethod, creditCardMethod, debitCardMethod, cashMethod, foodVoucherMethod] =
+    await Promise.all([
+      paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.PIX }),
+      paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.CREDIT_CARD }),
+      paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.DEBIT_CARD }),
+      paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.CASH }),
+      paymentMethodRepo.findOneByOrFail({ code: PaymentMethodCode.FOOD_VOUCHER }),
+    ]);
 
   // ── Users ──────────────────────────────────────────────────────────────────
 
@@ -102,7 +110,7 @@ async function seed() {
 
   // ── Restaurants ────────────────────────────────────────────────────────────
 
-  const [burger, pizza] = await restaurantRepo.save([
+  const [burger, pizza, sushi] = await restaurantRepo.save([
     restaurantRepo.create({
       ownerId: owner.id,
       name: 'Burger House',
@@ -111,6 +119,11 @@ async function seed() {
       latitude: -23.5631,
       longitude: -46.6544,
       isOpen: true,
+      isFeatured: true,
+      estimatedDeliveryMinutes: 25,
+      averageRating: 4.8,
+      totalReviews: 1,
+      totalOrders: 1,
     }),
     restaurantRepo.create({
       ownerId: owner.id,
@@ -120,9 +133,38 @@ async function seed() {
       latitude: -23.5551,
       longitude: -46.66,
       isOpen: true,
+      isFeatured: true,
+      estimatedDeliveryMinutes: 35,
+      averageRating: 4.5,
+      totalReviews: 1,
+      totalOrders: 2,
+    }),
+    restaurantRepo.create({
+      ownerId: owner.id,
+      name: 'Sushi Zen',
+      description: 'Combinados e temakis fresquinhos com ingredientes premium',
+      address: 'Al. Campinas, 200 - Jardins, SP',
+      latitude: -23.5617,
+      longitude: -46.6504,
+      isOpen: true,
+      isFeatured: false,
+      estimatedDeliveryMinutes: 45,
+      averageRating: 4.9,
+      totalReviews: 0,
+      totalOrders: 0,
     }),
   ]);
-  console.log('Restaurants seeded');
+
+  // ── Payment Methods per Restaurant ─────────────────────────────────────────
+
+  burger.acceptedPaymentMethods = [pixMethod, creditCardMethod, debitCardMethod, cashMethod];
+  pizza.acceptedPaymentMethods = [pixMethod, creditCardMethod, foodVoucherMethod];
+  sushi.acceptedPaymentMethods = [pixMethod, creditCardMethod, debitCardMethod];
+  burger.deliveryFee = 5.99;
+  pizza.deliveryFee = 0;     // entrega grátis
+  sushi.deliveryFee = 8.99;
+  await restaurantRepo.save([burger, pizza, sushi]);
+  console.log('Restaurants + payment methods seeded');
 
   // ── Products ───────────────────────────────────────────────────────────────
 
@@ -138,6 +180,28 @@ async function seed() {
     ,
     refri,
   ] = await productRepo.save([
+    // Sushi Zen products (added first to not break index references below)
+    productRepo.create({
+      restaurantId: sushi.id,
+      name: 'Combinado 20 peças',
+      description: 'Salmão, atum, camarão e pepino. Molho shoyu incluso',
+      price: 68.9,
+      isAvailable: true,
+    }),
+    productRepo.create({
+      restaurantId: sushi.id,
+      name: 'Temaki Salmão',
+      description: 'Cone generoso com salmão fresco e cream cheese',
+      price: 29.9,
+      isAvailable: true,
+    }),
+    productRepo.create({
+      restaurantId: sushi.id,
+      name: 'Yakissoba de Frango',
+      description: 'Macarrão japonês com frango, legumes e molho especial',
+      price: 38.0,
+      isAvailable: true,
+    }),
     productRepo.create({
       restaurantId: burger.id,
       name: 'X-Burguer Clássico',
@@ -393,17 +457,50 @@ async function seed() {
   ]);
   console.log('Deliveries seeded');
 
+  // ── Restaurant Reviews ─────────────────────────────────────────────────────
+
+  await reviewRepo.save([
+    reviewRepo.create({
+      restaurantId: burger.id,
+      customerId: maria.id,
+      orderId: order1.id,
+      rating: 5,
+      comment: 'Hambúrguer incrível! Chegou quentinho e no prazo. Super recomendo!',
+    }),
+    reviewRepo.create({
+      restaurantId: pizza.id,
+      customerId: carlos.id,
+      orderId: order2.id,
+      rating: 4,
+      comment: 'Pizza muito boa, massa fininha e crocante. Entrega foi um pouco demorada.',
+    }),
+  ]);
+  console.log('Reviews seeded');
+
+  // ── Favoritos ───────────────────────────────────────────────────────────────
+
+  await favoriteRepo.save([
+    favoriteRepo.create({ userId: maria.id, restaurantId: burger.id }),
+    favoriteRepo.create({ userId: maria.id, restaurantId: pizza.id }),
+    favoriteRepo.create({ userId: carlos.id, restaurantId: pizza.id }),
+    favoriteRepo.create({ userId: carlos.id, restaurantId: sushi.id }),
+  ]);
+  console.log('Favorites seeded');
+
   await AppDataSource.destroy();
 
   console.log('\nSeed completo! Resumo:');
   console.log('  Usuários        : 6 (admin, owner, 2 customers, 2 drivers)');
-  console.log('  Restaurantes    : 2 (Burger House, Pizza Express)');
+  console.log('  Restaurantes    : 3 (Burger House, Pizza Express, Sushi Zen)');
+  console.log('  Métodos pag.    : Burger→4, Pizza→3, Sushi→3');
   console.log('  Produtos        : 10');
   console.log('  Pedidos         : 3 (delivered / preparing / pending)');
   console.log('  Itens           : 6');
-  console.log('  Métodos pag.    : 8 (seeded via migration)');
   console.log('  Pagamentos      : 3 (confirmed / confirmed / pending)');
   console.log('  Entregas        : 2 (delivered / waiting)');
+  console.log('  Avaliações      : 2 (5⭐ Burger House, 4⭐ Pizza Express)');
+  console.log('  Favoritos       : 4 (Maria→2, Carlos→2)');
+  console.log('  Taxa de entrega : Burger R$5.99 / Pizza grátis / Sushi R$8.99');
 }
 
 seed().catch((err) => {
